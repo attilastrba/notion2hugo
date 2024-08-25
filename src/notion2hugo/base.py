@@ -65,6 +65,10 @@ class BlobType(StrEnum):
     TABLE = "table"
     TABLE_ROW = "table_row"
     TO_DO = "to_do"
+    VIDEO = "video"
+    COLUMN = "column"
+    COLUMN_LIST = "column_list"
+    CALLOUT = "callout"
 
 
 @dataclass(frozen=True)

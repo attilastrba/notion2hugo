@@ -165,7 +165,31 @@ class MarkdownStyler:
             )
         return "\n" + getattr(cls, blob.type.value)(blob, indent)
 
+    @classmethod
+    def video(cls, blob: Blob, indent: int) -> str:
+        return cls._list_item(
+            blob, list_ch=f"video", indent=indent
+        )
 
+    @classmethod
+    def column_list(cls, blob: Blob, indent: int) -> str:
+        texts = [cls._style_content_with_annotation(blob.rich_text)]
+        if blob.children:
+            for child_blob in blob.children:
+                texts.append(cls.process(child_blob, indent + cls.INC_INDENT))
+        return "\n".join(texts)
+
+    @classmethod
+    def column(cls, blob: Blob, indent: int) -> str:
+        return cls._list_item(
+            blob, list_ch=f"-column", indent=indent
+        )
+
+    @classmethod
+    def callout(cls, blob: Blob, indent: int) -> str:
+        return cls._list_item(
+            blob, list_ch=f"- callout", indent=indent
+        )
 @dataclass(frozen=True)
 class MarkdownExporterConfig(BaseExporterConfig):
     parent_dir: str
