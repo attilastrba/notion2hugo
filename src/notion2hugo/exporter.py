@@ -137,13 +137,17 @@ class MarkdownStyler:
             blob.file
         ), f"file expected for IMAGE blob {blob}"
         # prepare caption
+        # from IPython import embed
+        # import nest_asyncio
+        # nest_asyncio.apply()
+        # embed(using='asyncio')
         caption = cls._style_content_with_annotation(blob.rich_text)
         relative_path = os.path.join(
             MarkdownExporter.POST_IMAGES_DIR, os.path.basename(blob.file)
         )
         return (
-            f'{{{{< figure src="{relative_path}" '
-            f'caption="{caption}" align="center" >}}}}'
+            f'{{{{< img class="blog-img-center" width="800" src="{relative_path}" '
+            f'caption="{caption}" >}}}}'
         )
 
     @classmethod
@@ -187,9 +191,8 @@ class MarkdownStyler:
 
     @classmethod
     def callout(cls, blob: Blob, indent: int) -> str:
-        return cls._list_item(
-            blob, list_ch=f"- callout", indent=indent
-        )
+        text =  cls._style_content_with_annotation(blob.rich_text)
+        return f'{{{{< callout emoji="" text="{text}" > }}}}'
 @dataclass(frozen=True)
 class MarkdownExporterConfig(BaseExporterConfig):
     parent_dir: str
