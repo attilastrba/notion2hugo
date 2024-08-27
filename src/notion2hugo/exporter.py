@@ -17,6 +17,7 @@ from notion2hugo.base import (
 
 def sanitize_path(name: str) -> str:
     pattern = re.compile(r"[^a-zA-Z0-9-_\.]")
+    name = name.replace(" ", "_")
     return pattern.sub("", name)
 
 
@@ -171,9 +172,8 @@ class MarkdownStyler:
 
     @classmethod
     def video(cls, blob: Blob, indent: int) -> str:
-        return cls._list_item(
-            blob, list_ch=f"video", indent=indent
-        )
+       title = cls._style_content_with_annotation(blob.rich_text)
+       return f'{{{{< youtube id={blob.id} title="{title}" width=60 >}}}}'
 
     @classmethod
     def column_list(cls, blob: Blob, indent: int) -> str:
@@ -192,7 +192,7 @@ class MarkdownStyler:
     @classmethod
     def callout(cls, blob: Blob, indent: int) -> str:
         text =  cls._style_content_with_annotation(blob.rich_text)
-        return f'{{{{< callout emoji="" text="{text}" > }}}}'
+        return f'{{{{< callout emoji="" text="{text}" >}}}}'
 @dataclass(frozen=True)
 class MarkdownExporterConfig(BaseExporterConfig):
     parent_dir: str
@@ -236,15 +236,16 @@ class MarkdownExporter(BaseExporter):
             if self.config.post_name_property_key
             else content.id
         )
+
         assert isinstance(post_dir_name, str), f"{post_dir_name} expected to be str"
         post_dir_name = sanitize_path(post_dir_name)
         post_images_dir = os.path.join(
-            self.config.parent_dir, post_dir_name, self.POST_IMAGES_DIR
+            self.config.parent_dir, post_dir_name, f"{post_dir_name}_{self.POST_IMAGES_DIR}"
         )
         self.logger.debug(f"Creating output dir structure: {post_images_dir}")
         self.make_output_dirs(post_images_dir)
         post_full_path = os.path.join(
-            self.config.parent_dir, post_dir_name, self.POST_FILE_NAME
+            self.config.parent_dir, post_dir_name, f"{post_dir_name}.md"
         )
 
         # prepare post content and write it out

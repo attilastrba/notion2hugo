@@ -84,10 +84,11 @@ class NotionParser:
                 )
                 for t in block.content.get("caption", [])
             ]
-            # download and cache the img file locally
-            remote_url = block.content.get("file", {}).get("url", None)
-            assert remote_url, f"File url expected for image {block}"
-            img_path = self.download_image_locally(remote_url)
+            if block.type == 'image':
+                # download and cache the img file locally
+                remote_url = block.content.get("file", {}).get("url", None)
+                assert remote_url, f"File url expected for image {block}"
+                img_path = self.download_image_locally(remote_url)
         elif block.content.get("expression"):
             # equation
             rich_text = [ContentWithAnnotation(plain_text=block.content["expression"])]
@@ -137,6 +138,7 @@ class NotionParser:
 
     def parse_properties(self, metadata: Dict[str, Any]) -> Properties:
         prop: Properties = {}
+        #get summary
         for k, v in metadata.items():
             if v["type"] in ("relation"):
                 # relation
@@ -171,6 +173,17 @@ class NotionParser:
                 prop[k] = value
             else:
                 raise NotImplementedError(f"{k}, {v} type not handled")
+        #add my custom modification
+        #get summary
+        if 'summary' in metadata:
+            rich_text = metadata['summary'].get('rich_text', [])
+            if rich_text and isinstance(rich_text, list):
+                content = rich_text[0].get('text', {}).get('content', None)
+                if content:
+                    prop['summary'] = content
+
+        # add ReadingTime
+        prop["lesedauer"] = "ReadingTime"
         return prop
 
 
