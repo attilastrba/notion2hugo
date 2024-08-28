@@ -101,6 +101,7 @@ class Blob:
     table_width: Optional[int]
     table_cells: Optional[List[List[ContentWithAnnotation]]]
     is_checked: Optional[bool]  # todo item
+    url: Optional[str]
 
 
 @dataclass(frozen=True)

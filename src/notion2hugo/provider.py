@@ -58,6 +58,8 @@ class NotionParser:
 
     def parse_block(self, block: NotionBlockData) -> Blob:
         table_cells = None
+        # used for the video
+        url = ""
         img_path = None
         rich_text = []
 
@@ -89,6 +91,8 @@ class NotionParser:
                 remote_url = block.content.get("file", {}).get("url", None)
                 assert remote_url, f"File url expected for image {block}"
                 img_path = self.download_image_locally(remote_url)
+            if block.type == 'video':
+                url =  block.content.get('external')['url']
         elif block.content.get("expression"):
             # equation
             rich_text = [ContentWithAnnotation(plain_text=block.content["expression"])]
@@ -118,6 +122,7 @@ class NotionParser:
             table_width=block.content.get("table_width"),  # table
             table_cells=table_cells,
             is_checked=block.content.get("checked", None),  # todo
+            url = url,
         )
 
     def download_image_locally(self, url: str) -> str:

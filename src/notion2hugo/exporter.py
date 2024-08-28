@@ -137,15 +137,19 @@ class MarkdownStyler:
         assert blob.file and os.path.exists(
             blob.file
         ), f"file expected for IMAGE blob {blob}"
-        # prepare caption
-        # from IPython import embed
-        # import nest_asyncio
-        # nest_asyncio.apply()
-        # embed(using='asyncio')
         caption = cls._style_content_with_annotation(blob.rich_text)
-        relative_path = os.path.join(
-            MarkdownExporter.POST_IMAGES_DIR, os.path.basename(blob.file)
-        )
+
+        ###!!!! This is super ugly
+        ### this should have been this but somehow the post_images_dir is empty I dunno Why
+        ### something with Async I guess so solving it like this
+        # relative_path = MarkdownExporter.post_images_dir
+        # Split the path into parts using '/' as the delimiter
+        path_parts = blob.file.split('/')
+        # Replace the first two parts with 'images'
+        new_path_parts = ['images'] + path_parts[2:]
+        # Join the parts back into a single path
+        relative_path = '/'.join(new_path_parts)
+
         return (
             f'{{{{< img class="blog-img-center" width="800" src="{relative_path}" '
             f'caption="{caption}" >}}}}'
@@ -173,7 +177,9 @@ class MarkdownStyler:
     @classmethod
     def video(cls, blob: Blob, indent: int) -> str:
        title = cls._style_content_with_annotation(blob.rich_text)
-       return f'{{{{< youtube id={blob.id} title="{title}" width=60 >}}}}'
+       assert blob.url.startswith("https://youtu.be/")
+       video_id = blob.url[len("https://youtu.be/"):]
+       return f'{{{{< youtube id="{video_id}" title="{title}" width=60 >}}}}'
 
     @classmethod
     def column_list(cls, blob: Blob, indent: int) -> str:
@@ -205,6 +211,7 @@ class MarkdownExporterConfig(BaseExporterConfig):
 class MarkdownExporter(BaseExporter):
     POST_FILE_NAME: str = "index.md"
     POST_IMAGES_DIR: str = "images/"
+    post_images_dir = ""
 
     def __init__(self, config: MarkdownExporterConfig):
         super(MarkdownExporter, self).__init__(config)
@@ -239,11 +246,12 @@ class MarkdownExporter(BaseExporter):
 
         assert isinstance(post_dir_name, str), f"{post_dir_name} expected to be str"
         post_dir_name = sanitize_path(post_dir_name)
-        post_images_dir = os.path.join(
+        print("alloacting dir")
+        self.post_images_dir = os.path.join(
             self.config.parent_dir, post_dir_name, f"{post_dir_name}_{self.POST_IMAGES_DIR}"
         )
-        self.logger.debug(f"Creating output dir structure: {post_images_dir}")
-        self.make_output_dirs(post_images_dir)
+        self.logger.debug(f"Creating output dir structure: {self.post_images_dir}")
+        self.make_output_dirs(self.post_images_dir)
         post_full_path = os.path.join(
             self.config.parent_dir, post_dir_name, f"{post_dir_name}.md"
         )
@@ -258,7 +266,7 @@ class MarkdownExporter(BaseExporter):
                 assert blob.file and os.path.exists(
                     blob.file
                 ), f"file expected for IMAGE blob {blob}"
-                new_img_path = shutil.move(blob.file, post_images_dir)
+                new_img_path = shutil.move(blob.file, self.post_images_dir)
                 blob = Blob(
                     id=blob.id,
                     rich_text=blob.rich_text,
@@ -269,6 +277,7 @@ class MarkdownExporter(BaseExporter):
                     table_width=blob.table_width,
                     table_cells=blob.table_cells,
                     is_checked=blob.is_checked,
+                    url = blob.url
                 )
             texts.append(MarkdownStyler.process(blob))
         texts.append(MarkdownStyler.process(content.footer))
