@@ -85,6 +85,7 @@ class ContentWithAnnotation:
     is_toggleable: bool = False
     is_caption: bool = False
     highlight: bool = field(init=False, default=False)
+    is_feature_image: bool = False
 
     def __post_init__(self):
         object.__setattr__(self, "highlight", self.color != "default")

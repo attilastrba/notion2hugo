@@ -72,6 +72,7 @@ class NotionParser:
                     is_equation=t.get("type") == "equation",
                     is_toggleable=block.content.get("is_toggleable", False),
                     **t.get("annotations", {}),
+                    is_feature_image=t.get("plain_text") == "featureimage",
                 )
                 for t in block.content["rich_text"]
             ]
@@ -83,6 +84,7 @@ class NotionParser:
                     plain_text=t.get("plain_text"),
                     href=t.get("href"),
                     **t.get("annotations", {}),
+                    is_feature_image=t.get("plain_text") == "featureimage",
                 )
                 for t in block.content.get("caption", [])
             ]
@@ -104,6 +106,7 @@ class NotionParser:
                         plain_text=t.get("plain_text"),
                         href=t.get("href"),
                         **t.get("annotations", {}),
+                        is_feature_image=t.get("plain_text") == "featureimage",
                     )
                     for t in cell
                 ]
@@ -260,6 +263,16 @@ class NotionProvider(BaseProvider):
         block_data = await self.async_fetch_block_content(metadata.id)
         blobs = list(map(parser.parse_block, block_data))
         properties = parser.parse_properties(metadata.properties)
+
+        feature_image_file = ""
+        for blob in blobs:
+            for annotation in blob.rich_text:
+                if annotation.plain_text == "featureimage" and annotation.is_feature_image:
+                    feature_image_file = blob.file
+                    break  # Stop further iteration if the image is found
+
+        properties['featureImage'] = feature_image_file
+        # .post_images_dir
 
         return PageContent(id=metadata.id, blobs=blobs, properties=properties)
 
