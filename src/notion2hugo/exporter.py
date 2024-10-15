@@ -177,9 +177,11 @@ class MarkdownStyler:
     @classmethod
     def video(cls, blob: Blob, indent: int) -> str:
        title = cls._style_content_with_annotation(blob.rich_text)
+       assert title!="", "Missing Title for the youtube video, add caption"
        assert blob.url.startswith("https://youtu.be/")
        video_id = blob.url[len("https://youtu.be/"):]
        return f'{{{{< youtube id="{video_id}" title="{title}" width=60 >}}}}'
+
 
     @classmethod
     def column_list(cls, blob: Blob, indent: int) -> str:
@@ -223,6 +225,7 @@ class MarkdownExporter(BaseExporter):
         if os.path.exists(parent_dir):
             shutil.rmtree(parent_dir)
 
+
     def make_output_dirs(self, parent_dir: str, *args: str) -> None:
         os.makedirs(os.path.join(parent_dir, *args), exist_ok=True)
 
@@ -246,7 +249,6 @@ class MarkdownExporter(BaseExporter):
 
         assert isinstance(post_dir_name, str), f"{post_dir_name} expected to be str"
         post_dir_name = sanitize_path(post_dir_name)
-        print("alloacting dir")
         self.post_images_dir = os.path.join(
             self.config.parent_dir, post_dir_name, f"{post_dir_name}_{self.POST_IMAGES_DIR}"
         )
@@ -261,24 +263,31 @@ class MarkdownExporter(BaseExporter):
         texts = []
         texts.append(MarkdownStyler.process(content.header))
         for blob in content.blobs:
-            if blob.type == BlobType.IMAGE:
-                # copy image to local dir
-                assert blob.file and os.path.exists(
-                    blob.file
-                ), f"file expected for IMAGE blob {blob}"
-                new_img_path = shutil.move(blob.file, self.post_images_dir)
-                blob = Blob(
-                    id=blob.id,
-                    rich_text=blob.rich_text,
-                    type=blob.type,
-                    children=blob.children,
-                    file=new_img_path,
-                    language=blob.language,
-                    table_width=blob.table_width,
-                    table_cells=blob.table_cells,
-                    is_checked=blob.is_checked,
-                    url = blob.url
-                )
+            if blob.type == BlobType.IMAGE or \
+               blob.type == BlobType.PARAGRAPH or \
+               blob.type == BlobType.NUMBERED_LIST_ITEM or \
+               blob.type == BlobType.BULLETED_LIST_ITEM:
+                #TODO ATTI Nested Items Debug
+                # if blob.type == BlobType.NUMBERED_LIST_ITEM:
+                    # from IPython import embed
+                    # import nest_asyncio
+                    # nest_asyncio.apply()
+                    # embed(using='asyncio')
+                if  blob.file and os.path.exists( blob.file):
+                    new_img_path = shutil.copy(blob.file, self.post_images_dir)
+                    self.logger.info(f"Copy file {blob.file}")
+                    blob = Blob(
+                        id=blob.id,
+                        rich_text=blob.rich_text,
+                        type=blob.type,
+                        children=blob.children,
+                        file=new_img_path,
+                        language=blob.language,
+                        table_width=blob.table_width,
+                        table_cells=blob.table_cells,
+                        is_checked=blob.is_checked,
+                        url = blob.url
+                    )
             texts.append(MarkdownStyler.process(blob))
         texts.append(MarkdownStyler.process(content.footer))
 

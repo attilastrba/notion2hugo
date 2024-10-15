@@ -8,6 +8,7 @@ import tempfile
 from dataclasses import asdict, dataclass, field, fields
 from pprint import pformat
 from typing import Any, AsyncIterator, Dict, List, Optional
+from notion2hugo.utils import get_logger
 
 import requests
 from notion_client import AsyncClient
@@ -53,8 +54,12 @@ class NotionBlockData:
 
 
 class NotionParser:
-    def __init__(self, tmp_cache_dir: str):
+    def __init__(self, download_dir, tmp_cache_dir: str):
         self.tmp_cache_dir = tmp_cache_dir
+        self.download_dir = download_dir
+        self.img_count = 0
+        self.logger = get_logger("NotionParser")
+
 
     def parse_block(self, block: NotionBlockData) -> Blob:
         table_cells = None
@@ -134,10 +139,19 @@ class NotionParser:
             assert (
                 len(content_type) == 2 and content_type[0] == "image"
             ), f"URL expected to contain image, found {content_type}"
+            self.img_count = self.img_count+1
 
             img_path = os.path.join(
-                self.tmp_cache_dir, f"img_{abs(hash(url))}.{content_type[1]}"
+                self.download_dir, f"img_{self.img_count}.{content_type[1]}"
             )
+            if os.path.exists(img_path):
+                self.logger.info(f"Skipping download image {img_path}")
+                return img_path
+            self.logger.info(f"Downloading image {img_path}")
+            # from IPython import embed
+            # import nest_asyncio
+            # nest_asyncio.apply()
+            # embed(using='asyncio')
             with open(img_path, "wb") as fp:
                 local_path = fp.name
                 for chunk in response.iter_content(chunk_size=10 * 1024):
@@ -200,6 +214,7 @@ class NotionProviderConfig(BaseProviderConfig):
     database_id: str = field(default=NOTION_DATABASE_ID)
     filter: Dict[str, Any] = field(default_factory=dict)
     tmp_cache_dir: str = field(init=False)
+    download_dir: str = field(init=False)
 
     def __post_init__(
         self,
@@ -207,6 +222,13 @@ class NotionProviderConfig(BaseProviderConfig):
         assert self.database_id, f"database_id={self.database_id} not valid."
         tmp_cache_dir = tempfile.mkdtemp(prefix="images_", dir=f"/tmp/{__package__}")
         object.__setattr__(self, "tmp_cache_dir", tmp_cache_dir)
+
+        # download_dir = os.path.join(
+        #     self.config.parent_dir, post_dir_name, f"{post_dir_name}_{self.POST_IMAGES_DIR}"
+        # )
+        download_dir = "download"
+        os.makedirs(download_dir, exist_ok=True)
+        object.__setattr__(self, "download_dir", download_dir)
 
 
 @register_handler(NotionProviderConfig)
@@ -258,7 +280,7 @@ class NotionProvider(BaseProvider):
     async def async_fetch_and_parse_page_content(
         self, metadata: NotionPageMetadata
     ) -> PageContent:
-        parser = NotionParser(self.config.tmp_cache_dir)
+        parser = NotionParser(self.config.download_dir, self.config.tmp_cache_dir)
         # fetch and parse page content
         block_data = await self.async_fetch_block_content(metadata.id)
         blobs = list(map(parser.parse_block, block_data))
