@@ -9,6 +9,8 @@ from dataclasses import asdict, dataclass, field, fields
 from pprint import pformat
 from typing import Any, AsyncIterator, Dict, List, Optional
 from notion2hugo.utils import get_logger
+import re
+import shutil
 
 import requests
 from notion_client import AsyncClient
@@ -277,6 +279,11 @@ class NotionProvider(BaseProvider):
                 )
         return block_data
 
+    def sanitize_path(self, name: str) -> str:
+        pattern = re.compile(r"[^a-zA-Z0-9-_\.]")
+        name = name.replace(" ", "_").lower()
+        return pattern.sub("", name)
+
     async def async_fetch_and_parse_page_content(
         self, metadata: NotionPageMetadata
     ) -> PageContent:
@@ -293,11 +300,12 @@ class NotionProvider(BaseProvider):
                     feature_image_file = blob.file
                     break  # Stop further iteration if the image is found
 
-        # from IPython import embed
-        # import nest_asyncio
-        # nest_asyncio.apply()
-        # embed(using='asyncio')
-        properties['featureImage'] = feature_image_file
+        #Copy the thumbnail to the assets
+        #TODO Battika make this constants somwhere nice
+        extension = os.path.splitext(feature_image_file)[1]
+        feature_image_dest = f"images/thumb_{self.sanitize_path(properties['Title'])}{extension}"
+        shutil.copy(feature_image_file, f"../assets/{feature_image_dest}")
+        properties['featureImage'] = feature_image_dest
         # .post_images_dir
 
         return PageContent(id=metadata.id, blobs=blobs, properties=properties)
