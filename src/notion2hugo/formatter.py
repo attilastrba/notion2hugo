@@ -9,6 +9,7 @@ from notion2hugo.base import (
     PageContent,
     register_handler,
 )
+from collections import OrderedDict
 
 
 @dataclass(frozen=True)
@@ -23,11 +24,20 @@ class HugoFormatter(BaseFormatter):
         self.config: HugoFormatterConfig = config
 
     async def async_process(self, content: PageContent) -> PageContent:
-        # process properties and format header
-        header_props = [f"# ID: {content.id}"]
+        header_props = []
+
+        # Sort header and filter out stuff
+        content.properties.pop("# Status")
+        key_order = ['Title', 'featureImage', 'Date', 'Tags', 'Summary', 'Categories', 'Lesedauer']
+        sorted_data = OrderedDict((key, content.properties[key]) for key in key_order if key in content.properties)
+        # Check if keys exist and construct the OrderedDict
+
+        content.properties=sorted_data
+
         header_props.extend(
-            f"{k}: {v}" for k, v in sorted(content.properties.items()) if v
+            f"{k}: {v}" for k, v in content.properties.items() if v
         )
+
         header_blob = Blob(
             id="header",
             rich_text=[

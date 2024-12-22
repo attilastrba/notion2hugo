@@ -105,7 +105,7 @@ class Blob:
     url: Optional[str]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 class PageContent:
     blobs: List[Blob]
     id: str
