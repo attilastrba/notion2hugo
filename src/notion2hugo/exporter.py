@@ -17,7 +17,7 @@ from notion2hugo.base import (
 
 def sanitize_path(name: str) -> str:
     pattern = re.compile(r"[^a-zA-Z0-9-_\.]")
-    name = name.replace(" ", "_")
+    name = name.replace(" ", "_").lower()
     return pattern.sub("", name)
 
 
@@ -267,7 +267,7 @@ class MarkdownExporter(BaseExporter):
                blob.type == BlobType.PARAGRAPH or \
                blob.type == BlobType.NUMBERED_LIST_ITEM or \
                blob.type == BlobType.BULLETED_LIST_ITEM:
-                #TODO ATTI Nested Items Debug
+                    #TODO ATTI Nested Items Debug
                 # if blob.type == BlobType.NUMBERED_LIST_ITEM:
                     # from IPython import embed
                     # import nest_asyncio
