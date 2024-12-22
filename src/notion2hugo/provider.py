@@ -204,7 +204,7 @@ class NotionParser:
             if rich_text and isinstance(rich_text, list):
                 content = rich_text[0].get('text', {}).get('content', None)
                 if content:
-                    prop['Summary'] = content
+                    prop['Summary'] = f"'{content}'"
 
         # add ReadingTime
         prop["lesedauer"] = "ReadingTime"
