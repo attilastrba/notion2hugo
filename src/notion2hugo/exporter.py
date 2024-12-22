@@ -299,3 +299,20 @@ class MarkdownExporter(BaseExporter):
         self.logger.info(f"Export post id={content.id} to path='{post_full_path}'")
         with open(post_full_path, "w") as fp:
             fp.write("\n".join(texts).strip())
+
+
+        # TODO change the constants
+        target_path = f"../content/blog-entries/{os.path.basename(post_full_path)}"
+        # ask the user for confirmation
+        response = input(f"do you want to copy {post_full_path} to {target_path}? (y/n): ").strip().lower()
+        if response == "y":
+            try:
+                # copy the file to the blog-entries
+                shutil.copy(post_full_path, target_path)
+                self.logger.warning(f"File copied to {target_path}")
+                shutil.copytree(self.post_images_dir,
+                                f"../assets/images/{os.path.basename(self.post_images_dir.rstrip('/')).lower()}",
+                                dirs_exist_ok=True)
+            except exception as e:
+                self.logger.error(f"error copying file: {e}")
+
