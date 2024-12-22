@@ -197,12 +197,12 @@ class NotionParser:
                 raise NotImplementedError(f"{k}, {v} type not handled")
         #add my custom modification
         #get summary
-        if 'summary' in metadata:
-            rich_text = metadata['summary'].get('rich_text', [])
+        if 'Summary' in metadata:
+            rich_text = metadata['Summary'].get('rich_text', [])
             if rich_text and isinstance(rich_text, list):
                 content = rich_text[0].get('text', {}).get('content', None)
                 if content:
-                    prop['summary'] = content
+                    prop['Summary'] = content
 
         # add ReadingTime
         prop["lesedauer"] = "ReadingTime"
