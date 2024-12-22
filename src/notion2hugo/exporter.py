@@ -225,6 +225,9 @@ class MarkdownExporter(BaseExporter):
         if os.path.exists(parent_dir):
             shutil.rmtree(parent_dir)
 
+    def remove_line_with_caption(self, lines, keyword):
+        return [line for line in lines if keyword not in line]
+
 
     def make_output_dirs(self, parent_dir: str, *args: str) -> None:
         os.makedirs(os.path.join(parent_dir, *args), exist_ok=True)
@@ -289,6 +292,8 @@ class MarkdownExporter(BaseExporter):
                         url = blob.url
                     )
             texts.append(MarkdownStyler.process(blob))
+        # Remove the duplicated featureimage from the body
+        texts = self.remove_line_with_caption(texts, 'caption="featureimage"')
         texts.append(MarkdownStyler.process(content.footer))
 
         self.logger.info(f"Export post id={content.id} to path='{post_full_path}'")

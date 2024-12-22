@@ -30,8 +30,6 @@ class HugoFormatter(BaseFormatter):
         content.properties.pop("# Status")
         key_order = ['Title', 'featureImage', 'Date', 'Tags', 'Summary', 'Categories', 'Lesedauer']
         sorted_data = OrderedDict((key, content.properties[key]) for key in key_order if key in content.properties)
-        # Check if keys exist and construct the OrderedDict
-
         content.properties=sorted_data
 
         header_props.extend(
