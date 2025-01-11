@@ -119,7 +119,8 @@ class MarkdownStyler:
             rows = [cls.process(child_blob, indent) for child_blob in blob.children]
             if len(rows) >= 1:
                 rows.insert(1, "\n|" + "---|" * blob.table_width)
-        return "".join(rows)
+        table_content = "".join(rows)
+        return "\n"+'{{< bootstrap-table table_class="table table-striped table-bordered table-nonfluid w-auto" >}}'+table_content+"\n"+'{{< /bootstrap-table >}}'
 
     @classmethod
     def table_row(cls, blob: Blob, indent: int) -> str:
