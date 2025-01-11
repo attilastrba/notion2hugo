@@ -133,6 +133,27 @@ class MarkdownStyler:
         )
 
     @classmethod
+    def parse_caption(cls, input_string: str) -> tuple(str, str):
+        """
+        Parses the input string to extract text before and after the backslash.
+        Strips leading and trailing spaces from both parts.
+
+        Args:
+            input_string (str): The input string to parse.
+
+        Returns:
+            tuple: A tuple containing the `caption` (text before the backslash)
+                and `alt` (text after the backslash). If no backslash is found,
+                returns None for both.
+        """
+        if "\\" in input_string:
+            parts = input_string.split("\\", 1)  # Split only at the first backslash
+            caption = parts[0].strip()
+            alt = parts[1].strip()
+            return caption, alt
+        return input_string,""
+
+    @classmethod
     def image(cls, blob: Blob, indent: int) -> str:
         assert blob.file and os.path.exists(
             blob.file
@@ -149,10 +170,11 @@ class MarkdownStyler:
         new_path_parts = ['images'] + path_parts[2:]
         # Join the parts back into a single path
         relative_path = '/'.join(new_path_parts)
+        extract_cap, extract_alt = cls.parse_caption(caption)
 
         return (
             f'{{{{< img class="blog-img-center" width="800" src="{relative_path}" '
-            f'caption="{caption}" >}}}}'
+            f'caption="{extract_cap}" alt="{extract_alt}" >}}}}'
         )
 
     @classmethod
