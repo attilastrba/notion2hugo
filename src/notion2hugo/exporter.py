@@ -133,7 +133,7 @@ class MarkdownStyler:
         )
 
     @classmethod
-    def parse_caption(cls, input_string: str) -> tuple(str, str):
+    def parse_caption(cls, input_string: str):
         """
         Parses the input string to extract text before and after the backslash.
         Strips leading and trailing spaces from both parts.
