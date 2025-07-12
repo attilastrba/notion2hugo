@@ -201,7 +201,8 @@ class MarkdownStyler:
     def video(cls, blob: Blob, indent: int) -> str:
        title = cls._style_content_with_annotation(blob.rich_text)
        assert title!="", "Missing Title for the youtube video, add caption"
-       assert blob.url.startswith("https://youtu.be/")
+       assert blob.url.startswith("https://youtu.be/"), "Ensure the video URL starts with 'https://youtu.be/'. If \
+       you ar using youtube.com, please change it to youtu.be"
        video_id = blob.url[len("https://youtu.be/"):]
        return f'{{{{< youtube id="{video_id}" title="{title}" width=60 >}}}}'
 
