@@ -199,12 +199,22 @@ class MarkdownStyler:
 
     @classmethod
     def video(cls, blob: Blob, indent: int) -> str:
-       title = cls._style_content_with_annotation(blob.rich_text)
-       assert title!="", "Missing Title for the youtube video, add caption"
-       assert blob.url.startswith("https://youtu.be/"), "Ensure the video URL starts with 'https://youtu.be/'. If \
-       you ar using youtube.com, please change it to youtu.be"
-       video_id = blob.url[len("https://youtu.be/"):]
-       return f'{{{{< youtube id="{video_id}" title="{title}" width=60 >}}}}'
+        title = cls._style_content_with_annotation(blob.rich_text)
+        assert title != "", "Missing Title for the YouTube video, add caption"
+        assert blob.url.startswith("https://youtu.be/") or "youtube.com/watch?v=" in blob.url, \
+            "Ensure the video URL starts with 'https://youtu.be/' or 'https://www.youtube.com/watch?v='."
+
+        # Extract video ID
+        if blob.url.startswith("https://youtu.be/"):
+            video_id = blob.url[len("https://youtu.be/"):]
+        else:
+            import urllib.parse
+            parsed = urllib.parse.urlparse(blob.url)
+            query = urllib.parse.parse_qs(parsed.query)
+            video_id = query.get("v", [""])[0]
+            assert video_id, "Could not extract video ID from YouTube URL."
+
+        return f'{{{{< youtube id="{video_id}" title="{title}" width=60 >}}}}'
 
 
     @classmethod
